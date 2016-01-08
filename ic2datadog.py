@@ -26,7 +26,7 @@ while True:
     if not response.ok:
         # got an error response from the Instaclustr API - raise an alert in DataDog after 3 consecutive fails
         consecutive_fails += 1
-        print "Error retrieving metrics from Instaclustr API: {0}".format(response.status_code)
+        print "Error retrieving metrics from Instaclustr API: {0} - {1}".format(response.status_code, response.content)
         if consecutive_fails > 3:
             statsd.event("Instaclustr monitoring API error", "Error code is: {0}".format(response.status_code))
         sleep(20)
