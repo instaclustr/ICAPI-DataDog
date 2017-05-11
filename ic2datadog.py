@@ -6,8 +6,9 @@ from time import sleep
 from datadog import statsd
 import requests, json
 from requests.auth import HTTPBasicAuth
+import os
 
-configFile = "configuration.json"
+configFile = os.path.dirname(os.path.realpath(__file__)) + "/configuration.json"
 f = open(configFile)
 configuration = json.loads(f.read())
 f.close()
