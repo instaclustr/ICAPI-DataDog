@@ -8,7 +8,8 @@
   },
   "ic_options":
   {
-    "user_name":"[instaclustr user name]",
-    "api_key":"[instaclustr password]"
-  }
+    "user_name":"instaclustr-user-name",
+    "api_key":"instaclustr-password"
+  },
+  "tags":["tag_name:tag_value"]
 }

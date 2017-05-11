@@ -36,19 +36,40 @@ while True:
     metrics = json.loads(response.content)
     for node in metrics:
         public_ip = node["publicIp"]
+        private_ip = node["privateIp"]
+        rack_name = node["rack"]["name"]
+        data_centre_custom_name = node["rack"]["dataCentre"]["customDCName"]
+        data_centre_name = node["rack"]["dataCentre"]["name"]
+        data_centre_provider = node["rack"]["dataCentre"]["provider"]
+        provider_account_name = node["providerAccount"]["name"]
+        provider_account_provider = node["providerAccount"]["provider"]
+
+        tag_list = ['public_ip:' + public_ip,
+                    'private_ip:' + private_ip,
+                    'rack_name:' + rack_name,
+                    'data_centre_custom_name' + data_centre_custom_name,
+                    'data_centre_name:' + data_centre_name,
+                    'data_centre_provider:' + data_centre_provider,
+                    'provider_account_name:' + provider_account_name,
+                    'provider_account_provider:' + provider_account_provider
+                    ]
+        if data_centre_provider == 'AWS_VPC':
+            tag_list = tag_list + [
+                'region:' + node["rack"]["dataCentre"]["name"].lower().replace("_", "-"),
+                'availability_zone:' + node["rack"]["name"]
+            ]
+
         for metric in node["payload"]:
-            dd_metric_name = 'instaclustr.{0}.{1}'.format(public_ip,metric["metric"])
+            dd_metric_name = 'instaclustr.{0}'.format(metric["metric"])
             if metric["metric"] == "nodeStatus":
                 # node status metric maps to a data dog service check
                 if metric["values"][0]["value"] =="WARN":
-                    statsd.service_check(dd_metric_name, 1) # WARN status
-
+                    statsd.service_check(dd_metric_name, 1, tags=configuration['tags'] + tag_list) # WARN status
                 else:
-                    statsd.service_check(dd_metric_name, 0) # OK status
-
+                    statsd.service_check(dd_metric_name, 0, tags=configuration['tags'] + tag_list) # OK status
             else:
                 # all other metrics map to a data dog guage
-                statsd.gauge(dd_metric_name, metric["values"][0]["value"])
+                statsd.gauge(dd_metric_name, metric["values"][0]["value"], tags=configuration['tags'] + tag_list)
 
     sleep(20)
 
