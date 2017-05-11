@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 __author__ = 'ben.slater@instaclustr.com'
 
 from datadog import initialize
