@@ -41,17 +41,17 @@ while True:
         data_centre_custom_name = node["rack"]["dataCentre"]["customDCName"]
         data_centre_name = node["rack"]["dataCentre"]["name"]
         data_centre_provider = node["rack"]["dataCentre"]["provider"]
-        provider_account_name = node["providerAccount"]["name"]
-        provider_account_provider = node["providerAccount"]["provider"]
+        provider_account_name = node["rack"]["providerAccount"]["name"]
+        provider_account_provider = node["rack"]["providerAccount"]["provider"]
 
-        tag_list = ['public_ip:' + public_ip,
-                    'private_ip:' + private_ip,
-                    'rack_name:' + rack_name,
-                    'data_centre_custom_name' + data_centre_custom_name,
-                    'data_centre_name:' + data_centre_name,
-                    'data_centre_provider:' + data_centre_provider,
-                    'provider_account_name:' + provider_account_name,
-                    'provider_account_provider:' + provider_account_provider
+        tag_list = ['ic_public_ip:' + public_ip,
+                    'ic_private_ip:' + private_ip,
+                    'ic_rack_name:' + rack_name,
+                    'ic_data_centre_custom_name:' + data_centre_custom_name,
+                    'ic_data_centre_name:' + data_centre_name,
+                    'ic_data_centre_provider:' + data_centre_provider,
+                    'ic_provider_account_name:' + provider_account_name,
+                    'ic_provider_account_provider:' + provider_account_provider
                     ]
         if data_centre_provider == 'AWS_VPC':
             tag_list = tag_list + [
