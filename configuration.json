@@ -1,5 +1,5 @@
 {
-  "cluster_id":"[instaclustr cluster id]",
+  "cluster_id":"instaclustr-cluster-id",
   "metrics_list":"n::cpuutilization,n::cassandraReads,n::cassandraWrites,n::nodeStatus",
   "dd_options":
   {
@@ -8,7 +8,8 @@
   },
   "ic_options":
   {
-    "user_name":"[instaclustr user name]",
-    "api_key":"[instaclustr password]"
-  }
+    "user_name":"instaclustr-user-name",
+    "api_key":"instaclustr-password"
+  },
+  "tags":["tag_name:tag_value"]
 }
