@@ -7,7 +7,7 @@ IMG_REPO := tedk42/ic2datadog
 deps:
 	$(PIP) install -r requirements.txt --user
 
-unittest:
+unittest: testing-deps
 	$(PYTHON) -m unittest test
 	rm test-data/instaclustr.json # Keep the file if you wish...
 

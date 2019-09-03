@@ -1,2 +1,3 @@
 datadog==0.29.3
 json-logging==1.0.3
+requests==2.22.0
