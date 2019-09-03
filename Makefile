@@ -5,7 +5,7 @@ IMG_TAG := latest
 IMG_REPO := tedk42/ic2datadog
 
 deps:
-	$(PIP) install -r requirements.txt --user
+	$(PIP) install -r requirements.txt
 
 unittest: testing-deps
 	$(PYTHON) -m unittest test
@@ -25,7 +25,7 @@ coverage: testing-deps
 	open htmlcov/ic2datadog_py.html
 
 testing-deps:
-	$(PIP) install -r requirements.txt --user
-	$(PIP) install -r testing-requirements.txt --user
+	$(PIP) install -r requirements.txt
+	$(PIP) install -r testing-requirements.txt
 
 .PHONY: unittest deps build push testing-deps
