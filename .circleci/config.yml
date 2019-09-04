@@ -96,6 +96,8 @@ workflows:
   build-master:
     jobs:
       - build:
+          requires:
+            - test
           filters:
             branches:
               only: master
