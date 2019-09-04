@@ -53,6 +53,8 @@ jobs:
           path: test-reports
           destination: test-reports
   build:
+    docker:
+      - image: circleci/python:3.7.4
     environment:
       IMAGE_NAME: tedk42/ic2datadog
     steps:
@@ -74,6 +76,9 @@ jobs:
           paths:
             - ./image.tar
   publish:
+    docker:
+      # specify the version you desire here
+      - image: circleci/python:3.7.4
     steps:
       - attach_workspace:
           at: /tmp/workspace
