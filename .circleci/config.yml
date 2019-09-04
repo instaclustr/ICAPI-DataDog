@@ -53,6 +53,9 @@ jobs:
     environment:
       IMAGE_NAME: tedk42/ic2datadog
     steps:
+      - add_ssh_keys:
+          fingerprints:
+            - "f0:bf:66:be:d9:90:8d:6f:3b:78:03:1b:cb:35:1a:eb"
       - checkout
       - setup_remote_docker
       - run:
