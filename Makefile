@@ -12,10 +12,12 @@ unittest: testing-deps
 	rm test-data/instaclustr.json # Keep the file if you wish...
 
 build:
+	$(eval version = $(shell cat version))
 	docker build . -t $(IMG_REPO):$(IMG_TAG)
+	docker tag $(IMG_REPO):$(IMG_TAG) $(IMG_REPO):$(version)
 
-push: build
-	docker push $(IMG_REPO):$(IMG_TAG)
+push:
+	docker push $(IMG_REPO)
 
 coverage: testing-deps
 	coverage run test.py
@@ -27,5 +29,12 @@ coverage: testing-deps
 testing-deps:
 	$(PIP) install -r requirements.txt
 	$(PIP) install -r testing-requirements.txt
+
+version:
+	$(PIP) install semver
+	$(eval version = `$(PYTHON) version.py`)
+	echo $(version) > version
+	git tag $(version)
+	git push --tags
 
 .PHONY: unittest deps build push testing-deps

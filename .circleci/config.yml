@@ -4,7 +4,7 @@
 #
 version: 2
 jobs:
-  build:
+  test:
     docker:
       # specify the version you desire here
       - image: circleci/python:3.7.4
@@ -52,3 +52,51 @@ jobs:
       - store_artifacts:
           path: test-reports
           destination: test-reports
+  build:
+    environment:
+      IMAGE_NAME: tedk42/ic2datadog
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run:
+          name: SemVer the build
+          command: |
+            make version
+      - run:
+          name: Build Docker image and tag with version
+          command: |
+            make build
+      - run:
+          name: Archive Docker image
+          command: docker save -o image.tar $IMAGE_NAME
+      - persist_to_workspace:
+          root: .
+          paths:
+            - ./image.tar
+  publish:
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - setup_remote_docker
+      - run:
+          name: Load archived Docker image
+          command: docker load -i /tmp/workspace/image.tar
+      - run:
+          name: Publish Docker Image to Docker Hub
+          command: |
+            echo "$DOCKER_PASS" | docker login -u "$DOCKER_USERNAME" --password-stdin
+            make push
+workflows:
+  version: 2
+  build-master:
+    jobs:
+      - build:
+          filters:
+            branches:
+              only: master
+      - publish:
+          requires:
+            - build
+          filters:
+            branches:
+              only: master
