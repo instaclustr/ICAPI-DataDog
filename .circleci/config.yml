@@ -77,7 +77,6 @@ jobs:
             - ./image.tar
   publish:
     docker:
-      # specify the version you desire here
       - image: circleci/python:3.7.4
     steps:
       - attach_workspace:
@@ -86,6 +85,7 @@ jobs:
       - run:
           name: Load archived Docker image
           command: docker load -i /tmp/workspace/image.tar
+      - checkout
       - run:
           name: Publish Docker Image to Docker Hub
           command: |
