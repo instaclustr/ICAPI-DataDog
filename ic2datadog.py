@@ -51,7 +51,8 @@ def buildTags(node):
     provider_account_name = node["rack"]["providerAccount"]["name"] or ''
     provider_account_provider = node["rack"]["providerAccount"]["provider"] or ''
 
-    tag_list = ['ic_cluster_id:' + id,
+    tag_list = ['ic_node_id:' + id,
+                'ic_cluster_id:' + ic_cluster_id,
                 'ic_public_ip:' + public_ip,
                 'ic_private_ip:' + private_ip,
                 'ic_rack_name:' + rack_name,
