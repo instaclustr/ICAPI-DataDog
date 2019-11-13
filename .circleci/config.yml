@@ -42,6 +42,7 @@ jobs:
           name: run tests
           command: |
             . venv/bin/activate
+            make lint
             make unittest
 
       - store_artifacts:

@@ -1,16 +1,16 @@
 #!/usr/bin/env python
 __author__ = 'ben.slater@instaclustr.com'
 
-from datadog import initialize, api
 from time import sleep
-from datetime import datetime
-import requests, json, json_logging, logging
-from requests.auth import HTTPBasicAuth
+import asyncio, json, json_logging, logging
 import os, signal, sys, argparse
+import re, time
 
-def signal_handler(sig, frame):
-    print('You pressed Ctrl+C!')
-    sys.exit(0)
+# My custom imports
+from instaclustr.instaclustr import getInstaclustrMetrics, getInstaclustrTopics
+from instaclustr.helper import splitMetricsList
+from localdatadog.datadog import shipToDataDog
+
 
 # Logging setup
 app_name = os.getenv('APP_NAME', 'instaclustr-monitor')
@@ -25,95 +25,54 @@ logger.addHandler(logging.StreamHandler(sys.stdout))
 default_value = ''
 ic_cluster_id = os.getenv('IC_CLUSTER_ID', default_value)
 ic_metrics_list = os.getenv('IC_METRICS_LIST',
-'k::slaConsumerRecordsProcessed,n::cpuutilization,n::diskUtilization,\
-n::osLoad,k::kafkaBrokerState,k::slaProducerErrors,k::slaConsumerLatency,\
-k::slaProducerLatencyMs,k::underReplicatedPartitions,k::activeControllerCount,\
-k::offlinePartitions,k::leaderElectionRate,k::uncleanLeaderElections,\
-k::leaderCount,k::isrExpandRate,k::isrShrinkRate')
+                            'k::slaConsumerRecordsProcessed,n::cpuutilization,n::diskUtilization,\
+                            n::osLoad,k::kafkaBrokerState,k::slaProducerErrors,k::slaConsumerLatency,\
+                            k::slaProducerLatencyMs,k::underReplicatedPartitions,k::activeControllerCount,\
+                            k::offlinePartitions,k::leaderElectionRate,k::uncleanLeaderElections,\
+                            k::leaderCount,k::isrExpandRate,k::isrShrinkRate')
+## Each metric must be formatted as such 'kt::{0}::metric' as {0} will be replaced.
+ic_topic_list = os.getenv('IC_TOPIC_LIST',
+                          'kt::{0}::messagesInPerTopic,kt::{0}::bytesOutPerTopic,kt::{0}::bytesInPerTopic,\
+                          kt::{0}::fetchMessageConversionsPerTopic,kt::{0}::produceMessageConversionsPerTopic,\
+                          kt::{0}::failedFetchMessagePerTopic,kt::{0}::failedProduceMessagePerTopic')
 ic_user_name = os.getenv('IC_USER_NAME', default_value)
 ic_api_key = os.getenv('IC_API_KEY', default_value)
 ## IC_TAGS should be a comma separated list of strings, e.g. tag1:this,tag2:that
 ic_tags = os.getenv('IC_TAGS', 'environment:development').split(',')
+dd_metric_prefix = os.getenv('DD_METRIC_PREFIX', 'instaclustr')
+sleepy = os.getenv('TIME_BETWEEN_FETCH', 30)
 
-ic_target = os.getenv('IC_TARGET', 'https://api.instaclustr.com/monitoring/v1/clusters/{}?metrics={}')
-ic_target = ic_target.format(ic_cluster_id, ic_metrics_list)
-logger.debug(ic_target)
+## Added regex for topics we want to scrape.
+ic_topic_regex = os.getenv('IC_TOPIC_REGEX', default_value)
 
-# Builds the DataDog tags from the instaclustr data
-def buildTags(node):
-    id = node["id"] or ''
-    public_ip = node["publicIp"] or ''
-    private_ip = node["privateIp"] or ''
-    rack_name = node["rack"]["name"] or ''
-    data_centre_custom_name = node["rack"]["dataCentre"]["customDCName"] or ''
-    data_centre_name = node["rack"]["dataCentre"]["name"] or ''
-    data_centre_provider = node["rack"]["dataCentre"]["provider"] or ''
-    provider_account_name = node["rack"]["providerAccount"]["name"] or ''
-    provider_account_provider = node["rack"]["providerAccount"]["provider"] or ''
+## Added regex for consumer groups we want to scrape.
+ic_consumer_group_regex = os.getenv('IC_CONSUMER_GROUP_REGEX', default_value)
 
-    tag_list = ['ic_node_id:' + id,
-                'ic_cluster_id:' + ic_cluster_id,
-                'ic_public_ip:' + public_ip,
-                'ic_private_ip:' + private_ip,
-                'ic_rack_name:' + rack_name,
-                'ic_data_centre_custom_name:' + data_centre_custom_name,
-                'ic_data_centre_name:' + data_centre_name,
-                'ic_data_centre_provider:' + data_centre_provider,
-                'ic_provider_account_name:' + provider_account_name,
-                'ic_provider_account_provider:' + provider_account_provider
-                ]
-    if data_centre_provider == 'AWS_VPC':
-        tag_list = tag_list + [
-            'region:' + node["rack"]["dataCentre"]["name"].lower().replace("_", "-"),
-            'availability_zone:' + node["rack"]["name"]
-        ]
-    return tag_list
 
-# Calls the instaclustr API and returns the payload we expect.
-def getInstaclustrMetrics(target, dump=False):
-    auth_details = HTTPBasicAuth(username=ic_user_name, password=ic_api_key)
-    response = requests.get(url=target, auth=auth_details)
+def signal_handler(sig, frame):
+    print('You pressed Ctrl+C!')
+    sys.exit(0)
 
-    # Dump metrics response as a JSON payload (for testing).
-    if dump and response.ok and response.headers['Content-Type'] == 'application/json':
-        logger.info('Dumping output to file ./test-data/instaclustr.json')
-        with open('./test-data/instaclustr.json', 'w') as outfile:
-            json.dump(json.loads(response.content), outfile)
 
-    return response
+def ic_fetch_topics(regex, auth):
+    logger.info('Topic regex set. Will get topic metrics that match')
+    regex_pattern = re.compile(regex)
+    topic_list = getInstaclustrTopics(ic_cluster_id, regex_pattern,
+                                      ic_topic_list=ic_topic_list, auth=auth)
+    return (ic_metrics_list + ',' + topic_list).split(',')
 
-def shipToDataDog(metrics=[]):
-    epoch = datetime(1970, 1, 1)
-    myformat = "%Y-%m-%dT%H:%M:%S.%fZ"
-    for node in metrics:
-        send_list = []
-        id = node["id"] or ''
-        tag_list = buildTags(node)
 
-        for metric in node["payload"]:
-            dd_metric_name = 'instaclustr.{0}.{1}'.format(metric["metric"],metric["type"])
-            mydt = datetime.strptime(metric["values"][0]["time"], myformat)
-            time_val= int((mydt - epoch).total_seconds())
-            logger.debug(metric)
-            logger.debug(dd_metric_name)
-            send_list.append({'metric' : dd_metric_name, 'points' : [(time_val,float(metric["values"][0]["value"]))],'tags' : ic_tags + tag_list})
+# def ic_fetch_consumer_groups(regex, auth):
+#     logger.info('Consumer group regex set. Will get consumer groups that match')
+#     regex_pattern = re.compile(regex)
+#     cg_list = getInstaclustrConsumerGroups(ic_cluster_id, regex_pattern,
+#                                            auth["ic_user_name"], auth["ic_api_key"], dump=True,)
+#     logger.debug(cg_list)
+#     return cg_list
 
-        # Sends metrics per node as per tagging rules.
-        if (send_list):
-            logger.debug('Sending: {0}'.format(send_list))
-            dd_response = api.Metric.send(send_list)
-            if dd_response['status'] != 'ok':
-                logger.fatal('Error sending metrics to DataDog: {0}'.format(dd_response))
-            else:
-                logger.info('Sent metrics of node {0} to DataDog API with response: {1}'.format(id, dd_response['status']))
-        else:
-            logger.info('Empty list from the instaclustr API for the node: {0}'.format(id))
 
-def main():
-    consecutive_fails = 0
-    # Assuming you've set `DD_API_KEY` and `DD_APP_KEY` in your env,
-    # initialize() will pick it up automatically
-    initialize()
+async def main():
+    instaclustr_fails = 0
     parser = argparse.ArgumentParser(description='Instaclustr metrics to DataDog forwarder.')
     parser.add_argument('--once', type=bool, nargs='?',
                         const=True, default=False,
@@ -121,28 +80,61 @@ def main():
     args = parser.parse_args()
 
     while True:
-        response = getInstaclustrMetrics(target=ic_target)
+        start_time = time.time()
+        ic_auth = {
+            "ic_user_name": ic_user_name,
+            "ic_api_key": ic_api_key
+        }
+        instaclustr_response, dd_loop = [], []
+        # Retrieve kafka topic metrics if regex set
+        if (ic_topic_regex != default_value):
+            all_metrics = ic_fetch_topics(ic_topic_regex, ic_auth)
+        else:
+            all_metrics = ic_metrics_list.split(',')
+        logger.debug(all_metrics)
 
-        if not response.ok:
-            # got an error response from the Instaclustr API - raise an alert in DataDog after 3 consecutive fails
-            consecutive_fails += 1
-            logger.error('Error retrieving metrics from Instaclustr API: {0} - {1}'.format(response.status_code, response.content))
-            logger.debug(response)
-            if consecutive_fails > 3:
-                logger.fatal("Instaclustr monitoring API error", "Error code is: {0}".format(response.status_code))
-            # Sleep for longer as error has occurred and someone will be notified from the log message...
-            sleep(60)
-            continue
+        # # Retrieve kafka consumer group metrics if regex set
+        # if (ic_consumer_group_regex != default_value):
+        #     cg_metrics = ic_fetch_consumer_groups(ic_consumer_group_regex, ic_auth)
 
-        consecutive_fails = 0
-        metrics = json.loads(response.content)
-        logger.info('Retrieve metrics from instaclustr ok - size: {0}'.format(len(response.content)))
+        # Divide into groups of 20 metrics (instaclustr API max query amount)
+        groups = splitMetricsList(all_metrics, 20)
+        group_index = 0
+        for subset in groups:
+            metrics = asyncio.create_task(getInstaclustrMetrics(cluster_id=ic_cluster_id, metrics_list=subset,
+                                          auth=ic_auth, index=group_index, dumpfile=False))
+            instaclustr_response.append(metrics)
+            group_index += 1
 
-        shipToDataDog(metrics)
+        # Process async tasks as they finish
+        for f in asyncio.tasks.as_completed(instaclustr_response):
+            # sleep(1)
+            resp = await f
+            # getInstaclustrMetrics will return None if it cannot fetch data.
+            if resp is None:
+                instaclustr_fails += 1
+                continue  # skip sending to DD
+            if instaclustr_fails > 3:
+                logger.fatal("Multiple errors occurred with instaclustr monitoring API. Resetting error count.")
+                instaclustr_fails = 0
+                continue  # skip sending to DD
+            metrics = json.loads(resp)
+            dd_async_task = asyncio.create_task(shipToDataDog(ic_cluster_id, dd_metric_prefix, ic_tags, metrics))
+            dd_loop.append(dd_async_task)
+
+        # Process HTTP POST to DataDog as they finish
+        await asyncio.gather(*dd_loop)
+
+        # Reset the fail count for the next run
+        instaclustr_fails = 0
+
+        duration = time.time() - start_time
+        logger.info("total time {0} seconds".format(duration))
         if args.once:
             break
-        sleep(20)
+        sleep(sleepy)
 
-if __name__== "__main__":
+if __name__ == "__main__":
     signal.signal(signal.SIGINT, signal_handler)
-    main()
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(main())
