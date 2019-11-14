@@ -13,6 +13,8 @@ RUN pip install -r requirements.txt --user
 
 # App setup
 ENV DD_API_KEY DD_APP_KEY
+COPY instaclustr instaclustr
+COPY localdatadog localdatadog
 ADD ic2datadog.py .
 
 CMD ["python", "ic2datadog.py"]
