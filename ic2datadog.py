@@ -7,7 +7,9 @@ import os, signal, sys, argparse
 import re, time
 
 # My custom imports
-from instaclustr.instaclustr import getInstaclustrMetrics, getInstaclustrTopics
+from instaclustr.instaclustr import getInstaclustrMetrics, getInstaclustrTopics, \
+    getInstaclustrConsumerGroups, getInstaclustrConsumerGroupTopics, \
+    getInstaclustrConsumerGroupMetrics, getInstaclustrConsumerGroupClientMetrics
 from instaclustr.helper import splitMetricsList
 from localdatadog.datadog import shipToDataDog
 
@@ -62,15 +64,6 @@ def ic_fetch_topics(regex, auth):
     return (ic_metrics_list + ',' + topic_list).split(',')
 
 
-# def ic_fetch_consumer_groups(regex, auth):
-#     logger.info('Consumer group regex set. Will get consumer groups that match')
-#     regex_pattern = re.compile(regex)
-#     cg_list = getInstaclustrConsumerGroups(ic_cluster_id, regex_pattern,
-#                                            auth["ic_user_name"], auth["ic_api_key"], dump=True,)
-#     logger.debug(cg_list)
-#     return cg_list
-
-
 async def main():
     instaclustr_fails = 0
     parser = argparse.ArgumentParser(description='Instaclustr metrics to DataDog forwarder.')
@@ -93,16 +86,27 @@ async def main():
             all_metrics = ic_metrics_list.split(',')
         logger.debug(all_metrics)
 
-        # # Retrieve kafka consumer group metrics if regex set
-        # if (ic_consumer_group_regex != default_value):
-        #     cg_metrics = ic_fetch_consumer_groups(ic_consumer_group_regex, ic_auth)
+        # # Retrieve kafka consumer group metrics if regex set and ship to DataDog
+        if (ic_consumer_group_regex != default_value):
+            logger.info('Consumer group regex set. Will get consumer groups that match')
+            regex_pattern = re.compile(ic_consumer_group_regex)
+            consumer_groups = getInstaclustrConsumerGroups(ic_cluster_id, regex_pattern, auth=ic_auth)
+            logger.info('Number of consumer groups found: {0}'.format(len(consumer_groups)))
+            for cg in consumer_groups:
+                topics = getInstaclustrConsumerGroupTopics(ic_cluster_id, cg, auth=ic_auth)
+                logger.info('Number of topics found for consumer group {0}: {1}'.format(cg, len(topics)))
+                for topic in topics:
+                    cg_metrics = asyncio.create_task(getInstaclustrConsumerGroupMetrics(ic_cluster_id, cg, topic, ic_auth))
+                    instaclustr_response.append(cg_metrics)
+                    cg_client_metrics = asyncio.create_task(getInstaclustrConsumerGroupClientMetrics(ic_cluster_id, cg, topic, ic_auth))
+                    instaclustr_response.append(cg_client_metrics)
 
         # Divide into groups of 20 metrics (instaclustr API max query amount)
         groups = splitMetricsList(all_metrics, 20)
         group_index = 0
         for subset in groups:
             metrics = asyncio.create_task(getInstaclustrMetrics(cluster_id=ic_cluster_id, metrics_list=subset,
-                                          auth=ic_auth, index=group_index, dumpfile=False))
+                                          auth=ic_auth, index=group_index, dump_file=False))
             instaclustr_response.append(metrics)
             group_index += 1
 

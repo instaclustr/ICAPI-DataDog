@@ -14,26 +14,32 @@ logger.addHandler(logging.StreamHandler(sys.stdout))
 
 
 @sync_to_async
-def shipToDataDog(ic_cluster_id: str, dd_metric_prefix: str, ic_tags=[], metrics=[], dumpFile=False):
+def shipToDataDog(ic_cluster_id: str, dd_metric_prefix: str, ic_tags=[], metrics=[], dump_file=False):
     epoch = datetime(1970, 1, 1)
     myformat = "%Y-%m-%dT%H:%M:%S.%fZ"
     send_list = []
     for node in metrics:
         tag_list = buildTags(node, ic_cluster_id)
-
+        # Pre-populate if it's a consumer group metric
+        topic_tag = ['topic:' + node["topic"]] if "topic" in node else []
+        # Consumer group tags populated at this level
+        consumer_group_tag = ['consumerGroup:' + node["consumerGroup"]] if "consumerGroup" in node else []
+        client_id_tag = ['clientID:' + node["clientID"]] if "clientID" in node else []
         for metric in node["payload"]:
-            topic_tag = ['topic:' + metric["topic"]] if "topic" in metric else []
+            topic_tag = ['topic:' + metric["topic"]] if "topic" in metric else topic_tag
             dd_metric_name = '{0}.{1}.{2}'.format(dd_metric_prefix, metric["metric"], metric["type"])
             mydt = datetime.strptime(metric["values"][0]["time"], myformat)
             time_val = int((mydt - epoch).total_seconds())
             logger.debug(metric)
             logger.debug(dd_metric_name)
-            send_list.append({'metric': dd_metric_name, 'points': [(time_val, float(metric["values"][0]["value"]))], 'tags': ic_tags + tag_list + topic_tag})
+            send_list.append({'metric': dd_metric_name,
+                              'points': [(time_val, float(metric["values"][0]["value"]))],
+                              'tags': ic_tags + tag_list + topic_tag + consumer_group_tag + client_id_tag})
 
     # Sends metrics per node as per tagging rules.
     if (send_list):
         logger.debug('Sending: {0}'.format(send_list))
-        if dumpFile:
+        if dump_file:
             sync_dump(send_list, 'datadog-output.json')
         try:
             dd_response = api.Metric.send(send_list)

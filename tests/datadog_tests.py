@@ -63,7 +63,7 @@ async def test_shipToDataDog_basic(capfd):
         assert mocked_get.call_count == 0  # ship method isn't called
         assert response is None
 
-        # Simple metrics test - No payload DD Response != 'ok
+        # Simple metrics test - Payload empty from Instaclustr.
         metrics = [
             {
                 "id": "00000000-0000-0000-0000-000000000001",
@@ -88,7 +88,7 @@ async def test_shipToDataDog_basic(capfd):
         assert mocked_get.call_count == 0  # ship method isn't called
         assert 'Empty list from the instaclustr API for the cluster: my_test_cluster' in captured.out
 
-        # Simple metrics test - DD Response != 'ok
+        # Simple metrics test - DD Response != 'ok'
         mocked_get.return_value = {
             "status": 'Not_OK'
         }
@@ -136,7 +136,53 @@ async def test_shipToDataDog_basic(capfd):
             }]
         response = await datadog.shipToDataDog('yes', 'on', ic_tags=[], metrics=metrics)
         captured = capfd.readouterr()
-        assert mocked_get.call_count == 1
+        mocked_get.assert_called_once_with(
+            [
+                {
+                    "metric": "on.slaConsumerRecordsProcessed.count",
+                    "points": [
+                        (
+                            1567471685,
+                            30.0
+                        )
+                    ],
+                    "tags": [
+                        "ic_node_id:00000000-0000-0000-0000-000000000001",
+                        "ic_cluster_id:yes",
+                        "ic_private_ip:10.0.0.2",
+                        "ic_rack_name:ap-southeast-2a",
+                        "ic_data_centre_custom_name:KAFKA_VPC_DEVELOPMENT",
+                        "ic_data_centre_name:AP_SOUTHEAST_2",
+                        "ic_data_centre_provider:AWS_VPC",
+                        "ic_provider_account_name:Lendi AWS Account",
+                        "ic_provider_account_provider:AWS_VPC",
+                        "region:ap-southeast-2",
+                        "availability_zone:ap-southeast-2a"
+                    ]
+                },
+                {
+                    "metric": "on.cpuUtilization.percentage",
+                    "points": [
+                        (
+                            1567471685,
+                            1.61892901618929
+                        )
+                    ],
+                    "tags": [
+                        "ic_node_id:00000000-0000-0000-0000-000000000001",
+                        "ic_cluster_id:yes",
+                        "ic_private_ip:10.0.0.2",
+                        "ic_rack_name:ap-southeast-2a",
+                        "ic_data_centre_custom_name:KAFKA_VPC_DEVELOPMENT",
+                        "ic_data_centre_name:AP_SOUTHEAST_2",
+                        "ic_data_centre_provider:AWS_VPC",
+                        "ic_provider_account_name:Lendi AWS Account",
+                        "ic_provider_account_provider:AWS_VPC",
+                        "region:ap-southeast-2",
+                        "availability_zone:ap-southeast-2a"
+                    ]
+                }
+            ])
         assert 'Error sending metrics to DataDog: ' in captured.out
         assert response is None
 
@@ -191,7 +237,53 @@ async def test_shipToDataDog_complex(capfd):
         }
 
         response = await datadog.shipToDataDog('yes', 'on', ic_tags=[], metrics=metrics)
-        assert mocked_get.call_count == 1
+        mocked_get.assert_called_once_with(
+            [
+                {
+                    "metric": "on.slaConsumerRecordsProcessed.count",
+                    "points": [
+                        (
+                            1567471685,
+                            30.0
+                        )
+                    ],
+                    "tags": [
+                        "ic_node_id:00000000-0000-0000-0000-000000000001",
+                        "ic_cluster_id:yes",
+                        "ic_private_ip:10.0.0.2",
+                        "ic_rack_name:ap-southeast-2a",
+                        "ic_data_centre_custom_name:KAFKA_VPC_DEVELOPMENT",
+                        "ic_data_centre_name:AP_SOUTHEAST_2",
+                        "ic_data_centre_provider:AWS_VPC",
+                        "ic_provider_account_name:Lendi AWS Account",
+                        "ic_provider_account_provider:AWS_VPC",
+                        "region:ap-southeast-2",
+                        "availability_zone:ap-southeast-2a"
+                    ]
+                },
+                {
+                    "metric": "on.cpuUtilization.percentage",
+                    "points": [
+                        (
+                            1567471685,
+                            1.61892901618929
+                        )
+                    ],
+                    "tags": [
+                        "ic_node_id:00000000-0000-0000-0000-000000000001",
+                        "ic_cluster_id:yes",
+                        "ic_private_ip:10.0.0.2",
+                        "ic_rack_name:ap-southeast-2a",
+                        "ic_data_centre_custom_name:KAFKA_VPC_DEVELOPMENT",
+                        "ic_data_centre_name:AP_SOUTHEAST_2",
+                        "ic_data_centre_provider:AWS_VPC",
+                        "ic_provider_account_name:Lendi AWS Account",
+                        "ic_provider_account_provider:AWS_VPC",
+                        "region:ap-southeast-2",
+                        "availability_zone:ap-southeast-2a"
+                    ]
+                }
+            ])
         assert response == 'ok'
 
         # Throw exception from the api.Metric.send method
@@ -200,3 +292,144 @@ async def test_shipToDataDog_complex(capfd):
         captured = capfd.readouterr()
         assert mocked_get.call_count == 2
         assert 'Could not send metrics to DataDog' in captured.out
+
+
+async def test_shipToDataDog_topics(capfd):
+    with patch('datadog.api.Metric.send') as mocked_get:
+        # Simple metrics test - DD Response == 'ok
+        metrics = [
+            {
+                "consumerGroup": "group-20",
+                "topic": "test1",
+                "clientID": "client-2",
+                "payload": [
+                    {
+                        "metric": "consumerLag",
+                        "type": "count",
+                        "unit": "messages",
+                        "values": [
+                            {
+                                "value": "30.0",
+                                "time": "2019-09-17T11:38:59.000Z"
+                            }
+                        ]
+                    },
+                    {
+                        "metric": "consumerCount",
+                        "type": "count",
+                        "unit": "consumers",
+                        "values": [
+                            {
+                                "value": "1.0",
+                                "time": "2019-09-17T11:38:59.000Z"
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+        mocked_get.return_value = {
+            "status": 'ok'
+        }
+
+        response = await datadog.shipToDataDog('yes', 'on', ic_tags=[], metrics=metrics)
+        mocked_get.assert_called_once_with(
+            [
+                {
+                    "metric": "on.consumerLag.count",
+                    "points": [
+                        (
+                            1568720339,
+                            30.0
+                        )
+                    ],
+                    "tags": [
+                        "ic_cluster_id:yes",
+                        "topic:test1",
+                        "consumerGroup:group-20",
+                        "clientID:client-2"
+                    ]
+                },
+                {
+                    "metric": "on.consumerCount.count",
+                    "points": [
+                        (
+                            1568720339,
+                            1.0
+                        )
+                    ],
+                    "tags": [
+                        "ic_cluster_id:yes",
+                        "topic:test1",
+                        "consumerGroup:group-20",
+                        "clientID:client-2"
+                    ]
+                }
+            ]
+        )
+        assert response == 'ok'
+
+        mocked_get.reset_mock()
+        metrics = [
+            {
+                "consumerGroup": "group-20",
+                "topic": "test1",
+                "payload": [
+                    {
+                        "metric": "consumerGroupLag",
+                        "type": "count",
+                        "unit": "messages",
+                        "values": [
+                            {
+                                "value": "30.0",
+                                "time": "2019-09-17T11:52:45.000Z"
+                            }
+                        ]
+                    },
+                    {
+                        "metric": "clientCount",
+                        "type": "count",
+                        "unit": "clients",
+                        "values": [
+                            {
+                                "value": "1.0",
+                                "time": "2019-09-17T11:52:45.000Z"
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+        response = await datadog.shipToDataDog('yes', 'on', ic_tags=[], metrics=metrics)
+        mocked_get.assert_called_once_with(
+            [
+                {
+                    "metric": "on.consumerGroupLag.count",
+                    "points": [
+                        (
+                            1568721165,
+                            30.0
+                        )
+                    ],
+                    "tags": [
+                        "ic_cluster_id:yes",
+                        "topic:test1",
+                        "consumerGroup:group-20"
+                    ]
+                },
+                {
+                    "metric": "on.clientCount.count",
+                    "points": [
+                        (
+                            1568721165,
+                            1.0
+                        )
+                    ],
+                    "tags": [
+                        "ic_cluster_id:yes",
+                        "topic:test1",
+                        "consumerGroup:group-20"
+                    ]
+                }
+            ]
+        )
