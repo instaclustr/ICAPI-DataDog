@@ -68,7 +68,6 @@ jobs:
       - run:
           name: Build Docker image and tag with version
           command: |
-            sudo apt install python3.7-dev -y # Missing dependencies somewhere...
             make build
       - run:
           name: Archive Docker image

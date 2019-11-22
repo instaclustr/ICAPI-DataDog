@@ -1,5 +1,7 @@
 FROM python:3.7.4-alpine3.10
 
+# Need python3 dependencies
+RUN apk add build-base --update
 # Generic container setup
 WORKDIR /usr/app
 RUN addgroup -g 1001 -S appgroup && \
