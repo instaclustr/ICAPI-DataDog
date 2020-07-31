@@ -1,6 +1,6 @@
 {
   "cluster_id":"instaclustr-cluster-id",
-  "metrics_list":"n::cpuutilization,n::cassandraReads,n::cassandraWrites,n::nodeStatus",
+  "metrics_list":"n::cpuutilization,n::reads,n::writes",
   "dd_options":
   {
     "api_key":"[datadog API key]",
