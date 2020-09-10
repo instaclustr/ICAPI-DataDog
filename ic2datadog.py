@@ -74,7 +74,7 @@ while True:
                     # all other metrics map to a data dog guage
                     statsd.gauge(dd_metric_name, metric["values"][0]["value"], tags=configuration['tags'] + tag_list)
             else:
-                print("{0}: This metric returned no value.".format(dd_metric_name))
+                print("The metric '{0}' of type '{1}' returned no value.".format(dd_metric_name,metric["type"]))
     sleep(20)
 
 
