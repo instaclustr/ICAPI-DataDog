@@ -28,7 +28,7 @@ while True:
     if not response.ok:
         # got an error response from the Instaclustr API - raise an alert in DataDog after 3 consecutive fails
         consecutive_fails += 1
-        print "Error retrieving metrics from Instaclustr API: {0} - {1}".format(response.status_code, response.content)
+        print("Error retrieving metrics from Instaclustr API: {0} - {1}".format(response.status_code, response.content))
         if consecutive_fails > 3:
             statsd.event("Instaclustr monitoring API error", "Error code is: {0}".format(response.status_code))
         sleep(20)
@@ -74,7 +74,7 @@ while True:
                     # all other metrics map to a data dog guage
                     statsd.gauge(dd_metric_name, metric["values"][0]["value"], tags=configuration['tags'] + tag_list)
             else:
-                print("The metric '{0}' of type '{1}' returned no value.".format(dd_metric_name,metric["type"]))
+                print("Metric {0} of type '{1}' returned no value.".format(dd_metric_name,metric["type"]))
     sleep(20)
 
 
