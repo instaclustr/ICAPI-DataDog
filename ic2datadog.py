@@ -28,7 +28,7 @@ while True:
     if not response.ok:
         # got an error response from the Instaclustr API - raise an alert in DataDog after 3 consecutive fails
         consecutive_fails += 1
-        print "Error retrieving metrics from Instaclustr API: {0} - {1}".format(response.status_code, response.content)
+        print("Error retrieving metrics from Instaclustr API: {0} - {1}".format(response.status_code, response.content))
         if consecutive_fails > 3:
             statsd.event("Instaclustr monitoring API error", "Error code is: {0}".format(response.status_code))
         sleep(20)
@@ -63,16 +63,18 @@ while True:
 
         for metric in node["payload"]:
             dd_metric_name = 'instaclustr.{0}'.format(metric["metric"])
-            if metric["metric"] == "nodeStatus":
-                # node status metric maps to a data dog service check
-                if metric["values"][0]["value"] =="WARN":
-                    statsd.service_check(dd_metric_name, 1, tags=configuration['tags'] + tag_list) # WARN status
+            if len(metric["values"]) > 0:
+                if metric["metric"] == "nodeStatus":
+                    # node status metric maps to a data dog service check
+                    if metric["values"][0]["value"] =="WARN":
+                        statsd.service_check(dd_metric_name, 1, tags=configuration['tags'] + tag_list) # WARN status
+                    else:
+                        statsd.service_check(dd_metric_name, 0, tags=configuration['tags'] + tag_list) # OK status
                 else:
-                    statsd.service_check(dd_metric_name, 0, tags=configuration['tags'] + tag_list) # OK status
+                    # all other metrics map to a data dog guage
+                    statsd.gauge(dd_metric_name, metric["values"][0]["value"], tags=configuration['tags'] + tag_list)
             else:
-                # all other metrics map to a data dog guage
-                statsd.gauge(dd_metric_name, metric["values"][0]["value"], tags=configuration['tags'] + tag_list)
-
+                print("Metric {0} of type '{1}' returned no value.".format(dd_metric_name,metric["type"]))
     sleep(20)
 
 

@@ -1,0 +1,7 @@
+2020 Sep 10  Miranda Zhang  <miranda.zhang@instaclustr.com>
+
+    ic2datadog.py:
+        Skip metrics with empty value.
+        Make print compatible in both python 2 & 3.
+    README.md:
+        Updated link to setup instructions.
