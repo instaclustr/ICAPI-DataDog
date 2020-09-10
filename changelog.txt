@@ -1,0 +1,3 @@
+2020 Sep 10  Miranda Zhang  <miranda.zhang@instaclustr.com>
+
+    ic2datadog.py: Skip metrics with empty value
