@@ -13,7 +13,7 @@ Monitoring REST API to DataDog. It is specific to Apache Kafka monitoring.
 
 ## Usage
 
-Built and tested on `Python 3.7.4`.
+Built and tested on `Python 3.8.6` and `Python 3.9.0`.
 
 ### Dependencies
 

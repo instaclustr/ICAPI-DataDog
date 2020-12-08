@@ -14,9 +14,9 @@ logger.addHandler(logging.StreamHandler(sys.stdout))
 
 
 # cache setup
-cache = TTLCache(maxsize=5, ttl=600)
-cache_cg = TTLCache(maxsize=100, ttl=600)  # YMMV on the maxsize
-cache_cgt = TTLCache(maxsize=100, ttl=600)  # YMMV on the maxsize
+cache = TTLCache(maxsize=10, ttl=600)
+cache_cg = TTLCache(maxsize=300, ttl=600)  # YMMV on the maxsize
+cache_cgt = TTLCache(maxsize=300, ttl=600)  # YMMV on the maxsize
 
 # Instaclustr endpoints
 ic_topics_url = os.getenv('IC_TOPICS_URL', 'https://api.instaclustr.com/monitoring/v1/clusters/{0}/topics')

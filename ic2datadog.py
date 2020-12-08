@@ -17,8 +17,7 @@ from localdatadog.datadog import shipToDataDog
 # Logging setup
 app_name = os.getenv('APP_NAME', 'instaclustr-monitor')
 log_level = logging.getLevelName(os.getenv('LOG_LEVEL', 'INFO').upper())
-json_logging.ENABLE_JSON_LOGGING = os.getenv('ENABLE_JSON_LOGGING', 'TRUE') in ['true', 'True', 'TRUE', '1', 'y', 'yes']
-json_logging.init_non_web()
+json_logging.init_non_web(enable_json=True)
 logger = logging.getLogger(app_name)
 logger.setLevel(log_level)
 logger.addHandler(logging.StreamHandler(sys.stdout))
@@ -88,7 +87,7 @@ async def main():
 
         # # Retrieve kafka consumer group metrics if regex set and ship to DataDog
         if (ic_consumer_group_regex != default_value):
-            logger.info('Consumer group regex set. Will get consumer groups that match')
+            logger.info('Consumer group regex set ({0}). Will get consumer groups that match'.format(ic_consumer_group_regex))
             regex_pattern = re.compile(ic_consumer_group_regex)
             consumer_groups = getInstaclustrConsumerGroups(ic_cluster_id, regex_pattern, auth=ic_auth)
             logger.info('Number of consumer groups found: {0}'.format(len(consumer_groups)))

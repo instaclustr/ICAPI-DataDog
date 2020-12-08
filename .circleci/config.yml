@@ -7,7 +7,7 @@ jobs:
   test:
     docker:
       # specify the version you desire here
-      - image: circleci/python:3.7.4
+      - image: circleci/python:3.9.0-buster
 
     working_directory: ~/repo
 
@@ -50,7 +50,7 @@ jobs:
           destination: test-reports
   build:
     docker:
-      - image: circleci/python:3.7.4
+      - image: circleci/python:3.9.0-buster
     environment:
       IMAGE_NAME: tedk42/ic2datadog
     steps:
@@ -78,7 +78,7 @@ jobs:
             - ./image.tar
   publish:
     docker:
-      - image: circleci/python:3.7.4
+      - image: circleci/python:3.9.0-buster
     steps:
       - attach_workspace:
           at: /tmp/workspace
