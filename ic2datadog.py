@@ -90,7 +90,7 @@ async def main():
 
         # get infra metrics separately
         infra_metrics = asyncio.create_task(getInstaclustrMetrics(cluster_id=ic_cluster_id, metrics_list=ic_infra_metrics.split(','),
-                                          auth=ic_auth, index=0, dump_file=False))
+                                            auth=ic_auth, index=0, dump_file=False))
         instaclustr_response.append(infra_metrics)
 
         # # Retrieve kafka consumer group metrics if regex set and ship to DataDog
