@@ -26,11 +26,14 @@ logger.addHandler(logging.StreamHandler(sys.stdout))
 default_value = ''
 ic_cluster_id = os.getenv('IC_CLUSTER_ID', default_value)
 ic_metrics_list = os.getenv('IC_METRICS_LIST',
-                            'k::slaConsumerRecordsProcessed,n::cpuutilization,n::diskUtilization,\
-                            n::osLoad,k::kafkaBrokerState,k::slaProducerErrors,k::slaConsumerLatency,\
-                            k::slaProducerLatencyMs,k::underReplicatedPartitions,k::activeControllerCount,\
-                            k::offlinePartitions,k::leaderElectionRate,k::uncleanLeaderElections,\
-                            k::leaderCount,k::isrExpandRate,k::isrShrinkRate')
+                            'k::slaConsumerRecordsProcessed,k::kafkaBrokerState,k::slaProducerErrors,k::slaConsumerLatency,\
+                             k::slaProducerLatencyMs,k::underReplicatedPartitions,k::activeControllerCount,\
+                             k::offlinePartitions,k::leaderElectionRate,k::uncleanLeaderElections,\
+                             k::leaderCount,k::isrExpandRate,k::isrShrinkRate')
+
+ic_infra_metrics = os.getenv('IC_INFRA_METRICS', 'n::cpuutilization,n::diskUtilization,\
+                                                  n::osLoad,n::cpuUtilization,n::diskUtilization,\
+                                                  n::cpuiowaitpercent,n::filedescriptorlimit,n::filedescriptoropencount')
 ## Each metric must be formatted as such 'kt::{0}::metric' as {0} will be replaced.
 ic_topic_list = os.getenv('IC_TOPIC_LIST',
                           'kt::{0}::messagesInPerTopic,kt::{0}::bytesOutPerTopic,kt::{0}::bytesInPerTopic,\
@@ -84,6 +87,11 @@ async def main():
         else:
             all_metrics = ic_metrics_list.split(',')
         logger.debug(all_metrics)
+
+        # get infra metrics separately
+        infra_metrics = asyncio.create_task(getInstaclustrMetrics(cluster_id=ic_cluster_id, metrics_list=ic_infra_metrics.split(','),
+                                          auth=ic_auth, index=0, dump_file=False))
+        instaclustr_response.append(infra_metrics)
 
         # # Retrieve kafka consumer group metrics if regex set and ship to DataDog
         if (ic_consumer_group_regex != default_value):
