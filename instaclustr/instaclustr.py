@@ -101,7 +101,7 @@ def getInstaclustrConsumerGroupTopics(cluster_id, consumer_group, topics_only=Tr
     if not response.ok or response.headers['Content-Type'] != 'application/json':
         logger.error('Could not return consumer group topics from Instaclustr - {0}'.format(response.status_code))
         logger.error(target + auth.get("ic_api_key"))
-        return None 
+        return None
     if dump_file:
         sync_dump(response.content, 'instaclustr-consumer-group-topics-{0}.json'.format(consumer_group))
     if topics_only:
@@ -118,7 +118,7 @@ async def getInstaclustrConsumerGroupMetrics(cluster_id, consumer_group, topic, 
         logger.info('Debugging Error getInstaclustrConsumerGroupMetrics {0}'.format(response))
         if response.status != 200 or response.headers['Content-Type'] != 'application/json':
             logger.error('Missing consumer group metrics data from instaclustr - HTTP response code: {0}; \
-                 HTTP Header Content-Type: {1}'.format(response.status, response.headers['Content-Type']))
+HTTP Header Content-Type: {1}'.format(response.status, response.headers['Content-Type']))
             logger.error(target)
             await session.close()
             return None
