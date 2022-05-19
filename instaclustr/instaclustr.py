@@ -42,6 +42,7 @@ async def getInstaclustrMetrics(cluster_id, metrics_list, auth={}, index=0, dump
     target = ic_topic_metrics_url.format(cluster_id, ','.join(metrics_list))
     session = aiohttp.ClientSession()
     async with session.get(url=target, auth=auth_details) as response:
+        logger.info('Debugging Error getInstaclustrMetrics {0}'.format(response))
         if response.status != 200 or response.headers['Content-Type'] != 'application/json':
             logger.error('Missing metrics data from instaclustr - HTTP response code: {0}; \
 HTTP Header Content-Type: {1}'.format(response.status, response.headers['Content-Type']))
@@ -61,6 +62,7 @@ def getInstaclustrTopics(cluster_id, regex_pattern: re.Pattern, ic_topic_list='k
     auth_details = HTTPBasicAuth(username=auth.get("ic_user_name"), password=auth.get("ic_api_key"))
     target = ic_topics_url.format(cluster_id)
     response = requests.get(url=target, auth=auth_details)
+    logger.info('Debugging Error getInstaclustrTopics {0}'.format(response))
     if not response.ok or response.headers['Content-Type'] != 'application/json':
         logger.error('Could not return topics from Instaclustr - {0}'.format(response.status_code))
         return None
@@ -78,6 +80,7 @@ def getInstaclustrConsumerGroups(cluster_id, regex_pattern: re.Pattern, dump_fil
     auth_details = HTTPBasicAuth(username=auth.get("ic_user_name"), password=auth.get("ic_api_key"))
     target = ic_consumer_group_url.format(cluster_id)
     response = requests.get(url=target, auth=auth_details)
+    logger.info('Debugging Error getInstaclustrConsumerGroups {0}'.format(response))
     if not response.ok or response.headers['Content-Type'] != 'application/json':
         logger.error('Could not return consumer groups from Instaclustr - {0}'.format(response.status_code))
         logger.error(target)
@@ -94,6 +97,7 @@ def getInstaclustrConsumerGroupTopics(cluster_id, consumer_group, topics_only=Tr
     auth_details = HTTPBasicAuth(username=auth.get("ic_user_name"), password=auth.get("ic_api_key"))
     target = ic_consumer_group_topics_url.format(cluster_id, consumer_group)
     response = requests.get(url=target, auth=auth_details)
+    logger.info('Debugging Error getInstaclustrConsumerGroupTopics {0}'.format(response))
     if not response.ok or response.headers['Content-Type'] != 'application/json':
         logger.error('Could not return consumer group topics from Instaclustr - {0}'.format(response.status_code))
         logger.error(target + auth.get("ic_api_key"))
@@ -111,6 +115,7 @@ async def getInstaclustrConsumerGroupMetrics(cluster_id, consumer_group, topic, 
     target = ic_consumer_group_metrics_url.format(cluster_id, consumer_group, topic)
     session = aiohttp.ClientSession()
     async with session.get(url=target, auth=auth_details) as response:
+        logger.info('Debugging Error getInstaclustrConsumerGroupMetrics {0}'.format(response))
         if response.status != 200 or response.headers['Content-Type'] != 'application/json':
             logger.error('Missing consumer group metrics data from instaclustr - HTTP response code: {0}; \
 HTTP Header Content-Type: {1}'.format(response.status, response.headers['Content-Type']))
@@ -131,6 +136,7 @@ async def getInstaclustrConsumerGroupClientMetrics(cluster_id, consumer_group, t
     target = ic_consumer_group_client_metrics_url.format(cluster_id, consumer_group, topic)
     session = aiohttp.ClientSession()
     async with session.get(url=target, auth=auth_details) as response:
+        logger.info('Debugging Error getInstaclustrConsumerGroupClientMetrics {0}'.format(response))
         if response.status != 200 or response.headers['Content-Type'] != 'application/json':
             logger.error('Missing consumer group client metrics data from instaclustr - HTTP response code: {0}; \
 HTTP Header Content-Type: {1}'.format(response.status, response.headers['Content-Type']))
