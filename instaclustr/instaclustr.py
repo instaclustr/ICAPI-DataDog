@@ -30,7 +30,8 @@ ic_consumer_group_client_metrics_url = os.getenv('IC_CONSUMER_GROUP_CLIENT_METRI
 /clusters/{0}/kafka/consumerGroupClientMetrics?consumerGroup={1}&topic={2}&metrics=consumerLag,consumerCount,partitionCount')
 default_value = ''
 ic_rate_limiting_header = os.getenv('IC_RATE_LIMIT_KEY', default_value)
-headers={'ic-rate-limit-override':ic_rate_limiting_header}
+headers = {'ic-rate-limit-override': ic_rate_limiting_header}
+
 
 def envkey(*args, auth={}, **kwargs):
     key = hashkey(*args, **kwargs)
@@ -43,7 +44,7 @@ async def getInstaclustrMetrics(cluster_id, metrics_list, auth={}, index=0, dump
     auth_details = aiohttp.BasicAuth(login=auth.get("ic_user_name"), password=auth.get("ic_api_key"))
     target = ic_topic_metrics_url.format(cluster_id, ','.join(metrics_list))
     session = aiohttp.ClientSession()
-    async with session.get(url=target, auth=auth_details,  headers=headers) as response:
+    async with session.get(url=target, auth=auth_details, headers=headers) as response:
         logger.info('Debugging Error getInstaclustrMetrics {0}'.format(response))
         if response.status != 200 or response.headers['Content-Type'] != 'application/json':
             logger.error('Missing metrics data from instaclustr - HTTP response code: {0}; \
@@ -116,7 +117,7 @@ async def getInstaclustrConsumerGroupMetrics(cluster_id, consumer_group, topic, 
     auth_details = aiohttp.BasicAuth(login=auth.get("ic_user_name"), password=auth.get("ic_api_key"))
     target = ic_consumer_group_metrics_url.format(cluster_id, consumer_group, topic)
     session = aiohttp.ClientSession()
-    async with session.get(url=target, auth=auth_details,  headers=headers) as response:
+    async with session.get(url=target, auth=auth_details, headers=headers) as response:
         logger.info('Debugging Error getInstaclustrConsumerGroupMetrics {0}'.format(response))
         if (response.status != 200 or response.headers['Content-Type'] != 'application/json'):
             logger.error('Missing consumer group metrics data from instaclustr - HTTP response code: {0}; \
@@ -139,7 +140,7 @@ async def getInstaclustrConsumerGroupClientMetrics(cluster_id, consumer_group, t
     auth_details = aiohttp.BasicAuth(login=auth.get("ic_user_name"), password=auth.get("ic_api_key"))
     target = ic_consumer_group_client_metrics_url.format(cluster_id, consumer_group, topic)
     session = aiohttp.ClientSession()
-    async with session.get(url=target, auth=auth_details,  headers=headers) as response:
+    async with session.get(url=target, auth=auth_details, headers=headers) as response:
         logger.info('Debugging Error getInstaclustrConsumerGroupClientMetrics {0}'.format(response))
         if (response.status != 200 or response.headers['Content-Type'] != 'application/json'):
             logger.error('Missing consumer group client metrics data from instaclustr - HTTP response code: {0}; \
