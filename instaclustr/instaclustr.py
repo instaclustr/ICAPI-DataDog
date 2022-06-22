@@ -118,7 +118,7 @@ async def getInstaclustrConsumerGroupMetrics(cluster_id, consumer_group, topic, 
     session = aiohttp.ClientSession()
     async with session.get(url=target, auth=auth_details,  headers=headers) as response:
         logger.info('Debugging Error getInstaclustrConsumerGroupMetrics {0}'.format(response))
-        if (response.status != 200 or response.headers['Content-Type'] != 'application/json') and 'Content-Type' in response.headers:
+        if (response.status != 200 or response.headers['Content-Type'] != 'application/json'):
             logger.error('Missing consumer group metrics data from instaclustr - HTTP response code: {0}; \
 HTTP Header Content-Type: {1}'.format(response.status, response.headers['Content-Type']))
         else:
@@ -141,7 +141,7 @@ async def getInstaclustrConsumerGroupClientMetrics(cluster_id, consumer_group, t
     session = aiohttp.ClientSession()
     async with session.get(url=target, auth=auth_details,  headers=headers) as response:
         logger.info('Debugging Error getInstaclustrConsumerGroupClientMetrics {0}'.format(response))
-        if (response.status != 200 or response.headers['Content-Type'] != 'application/json') and 'Content-Type' in response.headers:
+        if (response.status != 200 or response.headers['Content-Type'] != 'application/json'):
             logger.error('Missing consumer group client metrics data from instaclustr - HTTP response code: {0}; \
 HTTP Header Content-Type: {1}'.format(response.status, response.headers['Content-Type']))
         else:
