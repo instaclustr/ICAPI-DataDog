@@ -122,8 +122,6 @@ async def getInstaclustrConsumerGroupMetrics(cluster_id, consumer_group, topic, 
         if (response.status != 200 or response.headers['Content-Type'] != 'application/json'):
             logger.error('Missing consumer group metrics data from instaclustr - HTTP response code: {0}; \
 HTTP Header Content-Type: {1}'.format(response.status, response.headers['Content-Type']))
-        else:
-            logger.error('Missing consumer group metrics data from instaclustr {0}'.format(response))
             logger.error(target)
             await session.close()
             return None
@@ -145,8 +143,6 @@ async def getInstaclustrConsumerGroupClientMetrics(cluster_id, consumer_group, t
         if (response.status != 200 or response.headers['Content-Type'] != 'application/json'):
             logger.error('Missing consumer group client metrics data from instaclustr - HTTP response code: {0}; \
 HTTP Header Content-Type: {1}'.format(response.status, response.headers['Content-Type']))
-        else:
-            logger.error('Missing consumer group client metrics data from instaclustr - HTTP response : {0};'.format(response))
             await session.close()
             return None
         metrics = await response.text()
