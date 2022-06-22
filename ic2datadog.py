@@ -45,7 +45,6 @@ ic_api_key = os.getenv('IC_API_KEY', default_value)
 ic_tags = os.getenv('IC_TAGS', 'environment:development').split(',')
 dd_metric_prefix = os.getenv('DD_METRIC_PREFIX', 'instaclustr')
 sleepy = int(os.getenv('TIME_BETWEEN_FETCH', 30))
-
 ## Added regex for topics we want to scrape.
 ic_topic_regex = os.getenv('IC_TOPIC_REGEX', default_value)
 
