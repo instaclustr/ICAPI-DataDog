@@ -97,7 +97,6 @@ def getInstaclustrConsumerGroupTopics(cluster_id, consumer_group, topics_only=Tr
     auth_details = HTTPBasicAuth(username=auth.get("ic_user_name"), password=auth.get("ic_api_key"))
     target = ic_consumer_group_topics_url.format(cluster_id, consumer_group)
     response = requests.get(url=target, auth=auth_details, headers=headers)
-    logger.info('Debugging Error getInstaclustrConsumerGroupTopics {0}'.format(response))
     if not response.ok or response.headers['Content-Type'] != 'application/json':
         logger.error('Could not return consumer group topics from Instaclustr - {0}'.format(response.status_code))
         logger.error(target + auth.get("ic_api_key"))
